@@ -19,6 +19,16 @@ Link to google</description>
     </item>
     
     <item>
+      <title>Python</title>
+      <link>/post/2020/12/10/python/</link>
+      <pubDate>Thu, 10 Dec 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2020/12/10/python/</guid>
+      <description>Python and R code Pandas The panda package is extremely useful in python especially with datasets that contain multidimesional arrays with attached rows and columns. It has many numerical operational task which is heplful, to introductory usage of python.
+import pandas as pd quakes=pd.read_csv(&amp;quot;https://vincentarelbundock.github.io/Rdatasets/csv/datasets/quakes.csv&amp;quot;,index_col=0) type(quakes) ## &amp;lt;class &amp;#39;pandas.core.frame.DataFrame&amp;#39;&amp;gt; len(quakes) ## 1000 len(quakes.columns) ## 5 The code above shows that even with python we are able to find data like how many observations for each variable, how many total observations total, and even the type of data frame quakes is.</description>
+    </item>
+    
+    <item>
       <title>Hello R Markdown</title>
       <link>/post/2015/07/23/hello-r-markdown/</link>
       <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>

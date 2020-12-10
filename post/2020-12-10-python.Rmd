@@ -1,0 +1,43 @@
+---
+title: Python
+author: ''
+date: '2020-12-10'
+slug: python
+categories: []
+tags: []
+description: ''
+---
+
+#Python and R code
+
+##Pandas
+
+The panda package is extremely useful in python especially with datasets that contain multidimesional arrays with attached rows and columns. It has many numerical operational task which is heplful, to introductory usage of python. 
+
+```{python}
+import pandas as pd
+quakes=pd.read_csv("https://vincentarelbundock.github.io/Rdatasets/csv/datasets/quakes.csv",index_col=0)
+
+type(quakes)
+len(quakes)
+len(quakes.columns)
+```
+
+The code above shows that even with python we are able to find data like how many observations for each variable, how many total observations total, and even the type of data frame quakes is. This is simliar to R studio in that we are able to get the same answer, but also able to be more in depth functions.
+
+##harmony between the two code (reticulate)
+
+The reticulate is useful in using both python and r stduio at the same time. With the use of both codes, this enables high interoperability. Some data sciences uses both pieces of code and with reticulate we are able to use r code and python seamlessly. 
+
+```{R}
+library(reticulate)
+vaccine<-"Is the safeguard"
+```
+
+
+```{python}
+diease="for covid"
+print(r.vaccine,diease)
+```
+
+![](/post/2020-12-10-python_files/Screenshot (111).png){width=60%}
