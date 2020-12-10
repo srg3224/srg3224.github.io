@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Another Comp Bio Project</title>
+    <link>/project/</link>
+    <description>Recent content in Projects on Another Comp Bio Project</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language><atom:link href="/project/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project1/</guid>
+      <description>Data Wrangling and Data Exploration library(dplyr) library(tidyr) library(ggplot2) library(tibble) library(readr) ### importing datasets income_per &amp;lt;- read_csv(&amp;quot;income_per_person_gdppercapita_ppp_inflation_adjusted_MODIFY.csv&amp;quot;) pop_total &amp;lt;- read_csv(&amp;quot;population_total_modified.csv&amp;quot;) urban_pop &amp;lt;- read_csv(&amp;quot;urban_population_percent_of_total_modified.csv&amp;quot;) Introduction I knew I wanted to compare countries with each other, so at first I was exploring specific countries to compare. I was primarily using US data vs EU countries. I then thought why not do all countries so I decided to use Gapminder, which has data on all global countries avalible.</description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project/project2/</guid>
+      <description>Introduction The LungCapData dataset shows the Lungcapacity of individuals of smokers and nonsmokers. There are various variables in this dataset like Age, LungCap, Height, Gender and Smoke. The Age is a categorical variable that shows the age of the person filled in the observation. The Height shows how tall in length of inchs the person observed is; it is a numeric variable. The Gender shows wheter the person observed is male or female, a categorical variable.</description>
+    </item>
+    
+  </channel>
+</rss>

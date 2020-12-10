@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Sushil G." />
+    
+    <link rel="shortcut icon" type="image/x-icon" href="../../img/favicon.ico">
+    <title>Project 2: Modeling, Testing, and Predicting</title>
+    <meta name="generator" content="Hugo 0.79.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../../css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="../../post/">BLOG</a></li>
+        
+        <li><a href="../../projects/">PROJECTS</a></li>
+        
+        <li><a href="../../resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="../../project/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+ 
+<div class="blog-title">
+          <h4>
+         January 1, 0001 
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The LungCapData dataset shows the Lungcapacity of individuals of smokers and nonsmokers. There are various variables in this dataset like Age, LungCap, Height, Gender and Smoke. The Age is a categorical variable that shows the age of the person filled in the observation. The Height shows how tall in length of inchs the person observed is; it is a numeric variable. The Gender shows wheter the person observed is male or female, a categorical variable. The Lung Capacity in mmHG shows the maximum amount of air that can be held in the lungs, a numeric variable. The Smoke variable is categorical that shows if those observe smoke or do not smoke reguarly; yes meaning the observation person does smoke. I want to test the effect of smoking on lungcapacity as well as the effect of gender on the likelyhood to smpke. I want to test various factors like that. I chose this dataset, because I just finished learning amount the physiology of the lungs and what to see if I can apply my knowledge in this. The dataset contains 654 observations with 5 variables.</p>
+</div>
+<div id="guidelines-and-rubric" class="section level2">
+<h2>Guidelines and Rubric</h2>
+<ul>
+<li><strong>1. (15 pts)</strong> Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all is unreasonable or doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss MANOVA assumptions and whether or not they are likely to have been met (no need for anything too in-depth) (2).</li>
+</ul>
+<pre class="r"><code>library(lmtest)
+library(sandwich)
+library(plotROC)
+library(tidyverse)
+library(MASS)
+library(glmnet)
+library(ggplot2)
+
+LungCapData &lt;- read_csv(&quot;LungCapData2.csv&quot;)
+
+manova&lt;-manova(cbind(Age, LungCap, Height)~Gender, data = LungCapData)
+summary(manova)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## Gender 1 0.083768 19.809 3 650 2.688e-12 ***
+## Residuals 652
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>The Manova shows the effect of gender on age, lung capacity,and height. It showed a significant difference were found of each element level, p &lt;0.001.</p>
+<pre class="r"><code>summary.aov(manova)</code></pre>
+<pre><code>## Response Age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Gender 1 4.8 4.8397 0.5543 0.4568
+## Residuals 652 5693.1 8.7317
+##
+## Response LungCap :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Gender 1 191.9 191.916 29.607 7.496e-08 ***
+## Residuals 652 4226.4 6.482
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Response Height :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## Gender 1 537.2 537.22 16.917 4.405e-05 ***
+## Residuals 652 20704.9 31.76
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>The ANOVA for the dependent variables were done to follow the MANOVA test. The univariate ANOVA for the stats tested of the lung capacity and height were significantly different by gender. Age was not signifcanlty different by gender.</p>
+<pre class="r"><code>pairwise.t.test(LungCapData$Age, LungCapData$Gender, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$Age and LungCapData$Gender 
+## 
+##      female
+## male 0.46  
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(LungCapData$LungCap, LungCapData$Gender, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$LungCap and LungCapData$Gender 
+## 
+##      female 
+## male 7.5e-08
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>pairwise.t.test(LungCapData$Height, LungCapData$Gender, p.adj=&quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$Height and LungCapData$Gender 
+## 
+##      female 
+## male 4.4e-05
+## 
+## P value adjustment method: none</code></pre>
+<p>The post hoc analysis was done by using pairwise comparison to see which gender differed in each variable that was tested. When looking at the age of the observed, male and female do not differ significantly. When looking at Lung Capacity and Height, male and female do differ significantly.</p>
+<pre class="r"><code>#Probability of Type-1 Error
+1-(1-0.05)^7</code></pre>
+<pre><code>## [1] 0.3016627</code></pre>
+<pre class="r"><code>#bonf correction
+0.05/7</code></pre>
+<pre><code>## [1] 0.007142857</code></pre>
+<p>There were 7 different hypothesis conducted so probablity of Type-1 Error is 0.3016627. Bonferroni correction was used to adjust the significnae level to 0.007142857.</p>
+<pre class="r"><code>pairwise.t.test(LungCapData$Age, LungCapData$Gender, p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$Age and LungCapData$Gender 
+## 
+##      female
+## male 0.46  
+## 
+## P value adjustment method: bonferroni</code></pre>
+<pre class="r"><code>pairwise.t.test(LungCapData$LungCap, LungCapData$Gender, p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$LungCap and LungCapData$Gender 
+## 
+##      female 
+## male 7.5e-08
+## 
+## P value adjustment method: bonferroni</code></pre>
+<pre class="r"><code>pairwise.t.test(LungCapData$Height, LungCapData$Gender, p.adj=&quot;bonf&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  LungCapData$Height and LungCapData$Gender 
+## 
+##      female 
+## male 4.4e-05
+## 
+## P value adjustment method: bonferroni</code></pre>
+<p>After adjusting for the significance value, the mean difference between males and females are still significant for lung capacity and height, but not for age.</p>
+<p>The ANOVA was probably met, because of the assumptions like random sampling, indpendent observations, etc. exist when the data was collected. The MANOVA test proably did not meet the assumptions du to the need of homogenity, no multicollinerity, no extreme outliers, etc. A data set like this would be hard to meet these assumptions and the data would need to be controlled more.</p>
+<ul>
+<li><strong>2. (10 pts)</strong> Perform some kind of randomization test on your data (that makes sense). The statistic can be anything you want (mean difference, correlation, F-statistic/ANOVA, chi-squared), etc. State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).</li>
+</ul>
+<pre class="r"><code>#Hypothesis below...</code></pre>
+<p>Null Hypothesis (Ho): The mean lung capacity is the same for nonsmokers and smokers Alternative Hypothesis (Ha):The mean lung capacity is different for nonsmokers and smokers</p>
+<pre class="r"><code>mean_diff &lt;- mean(LungCapData[LungCapData$Smoke==&quot;yes&quot;,]$LungCap)-mean(LungCapData[LungCapData$Smoke==&quot;no&quot;,]$LungCap)
+
+#permutation loop
+rand_dist&lt;-vector()
+for(i in 1:5000){
+new&lt;-data.frame(LungCap=sample(LungCapData$LungCap),Smoke=LungCapData$Smoke)
+rand_dist[i]&lt;-mean(new[new$Smoke==&quot;yes&quot;,]$LungCap)- mean(new[new$Smoke==&quot;no&quot;,]$LungCap)}
+
+#P value of permutation test
+mean(rand_dist&gt;mean_diff)*2</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>#Independent t-test
+t.test(data=LungCapData,LungCap~Smoke)</code></pre>
+<pre><code>##
+## Welch Two Sample t-test
+##
+## data: LungCap by Smoke
+## t = -7.1496, df = 83.273, p-value = 3.074e-10
+## alternative hypothesis: true difference in means is not
+equal to 0
+## 95 percent confidence interval:
+## -2.725276 -1.539038
+## sample estimates:
+## mean in group no mean in group yes
+## 5.698428 7.830585</code></pre>
+<p>The p-value from the randomization test is less than 0.05 of alpha, so we can reject the null hypothesis and state that the mean lung capacity is different for nonsmokers and smokers of those sampled. This was used for the independent t-test, but the randomization shows data that is verified.</p>
+<pre class="r"><code>{hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;); abline(v = mean_diff,col=&quot;red&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-8-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>{hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;,breaks=2); abline(v = mean_diff,col=&quot;red&quot;)}</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-8-2.png" width="768" style="display: block; margin: auto;" /> Both graphs show the same distribution, but breaks was added to the second histogram to show the test static.</p>
+<ul>
+<li><p><strong>3. (35 pts)</strong> Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.</p>
+<ul>
+<li>Interpret the coefficient estimates (do not discuss significance) (10)</li>
+<li>Plot the regression using <code>ggplot()</code> using geom_smooth(method=&quot;lm&quot;). If your interaction is numeric by numeric, refer to code in the slides to make the plot or check out the <code>interactions</code> package, which makes this easier. If you have 3 or more predictors, just chose two of them to plot for convenience. (8)</li>
+<li>Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)</li>
+<li>Regardless, recompute regression results with robust standard errors via <code>coeftest(..., vcov=vcovHC(...))</code>. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)</li>
+<li>What proportion of the variation in the outcome does your model explain? (4)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>#Mean-Centering Numeric Variables
+LungCapData-&gt; LungCapData_c
+LungCapData_c$Height &lt;- LungCapData_c$Height - mean(LungCapData_c$Height, na.rm = T)
+
+fit1&lt;-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+summary(fit1)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = LungCap ~ Gender * Smoke * Height, data =
+LungCapData_c)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -4.6587 -0.7521 0.0213 0.7456 6.0960
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 5.66235 0.07882 71.838 &lt; 2e-16 ***
+## Gendermale 0.38608 0.10624 3.634 0.000301 ***
+## Smokeyes 0.76240 0.37108 2.055 0.040324 *
+## Height 0.34112 0.01585 21.526 &lt; 2e-16 ***
+## Gendermale:Smokeyes -1.86029 0.70000 -2.658 0.008066 **
+## Gendermale:Height 0.07059 0.01950 3.620 0.000318 ***
+## Smokeyes:Height -0.20229 0.09007 -2.246 0.025048 *
+## Gendermale:Smokeyes:Height 0.40948 0.11935 3.431
+0.000640 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 1.252 on 646 degrees of freedom
+## Multiple R-squared: 0.7708, Adjusted R-squared: 0.7683
+## F-statistic: 310.4 on 7 and 646 DF, p-value: &lt; 2.2e-16</code></pre>
+<p>The intercept estimate is 5.66235, which the average lung capacity when no interaction between gender and whether or not the observed smoke. The coefficent estimate of gender is 0.38608 which is how much the lung capacity increases, mmHG, when the gender is male. The coefficient of smoke, 0.76240, is how much the average lung capacity increases when the individual does smoke. The coefficient estimate for height of indivudals, 0.34112, shows how much the avergae lung capacity ubcrease for every increase in 1 inch.</p>
+<p>The coefficient Gendermale:Smokeyes is -1.86029 is how much the average lung capacity will change if the indivual is male who smokes (said yes to smoking). Gendermale:Height is 0.07059 is how much average lung capacity will change if individual is male and every increase in 1 inch of height. The coefficient of Smokeyes:Height is -0.20229 is how much average lung capacity will change if the individual smokes and every increase in 1 inch of height.The cofficiebt of Gendermale:Smokeyes:Height is 0.40948 which is how much the average lung capacity will change for every increase in 1 inch of height, if the individual is male, and if the indivudal smokes.</p>
+<pre class="r"><code>ggplot(LungCapData_c, aes(x=Height, y=LungCap, group=Smoke))+geom_point(aes(color=Smoke))+
+geom_smooth(method=&quot;lm&quot;,se=F,fullrange=T,aes(color=Smoke))+theme(legend.position=c(.9,.19))+xlab(&quot;Height of individual&quot;)+ggtitle(&quot;Interaction between hright and smoking habit on lung capacity&quot;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-10-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>resids&lt;-fit1$residuals
+fitvals&lt;-fit1$fitted.values
+
+#Linearity
+ggplot(LungCapData_c, aes(x=Height, y=LungCap)) + geom_point() + geom_smooth(method = &quot;lm&quot;, se=F)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-11-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Homoskedasticity
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-12-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Homoskedasticity of Breuch-Pagan Test
+bptest(fit1)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit1
+## BP = 70.352, df = 7, p-value = 1.254e-12</code></pre>
+<pre class="r"><code>#Normality
+ggplot()+geom_histogram(aes(resids), bins=20)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-14-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>ggplot()+geom_qq(aes(sample=resids))+geom_qq_line()</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-14-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#Normality from Shapiro-Wilk Test
+shapiro.test(resids)</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  resids
+## W = 0.98868, p-value = 6.107e-05</code></pre>
+<p>The numeric variable, Height, does seem to have a linera relationship according to the graph and the other two variables are also linear, but are categorical (not important). The Bech-Pagan test, we have to rejec the null hypothesis of homoskedasticity because the pvalue shows significance. The Shaprio_wilk Test null hypothesis is also rejected becuase the test was also significant. The assumptions of linearity seemed to met, but the assumtpions for homoskedasticity and normality were not met.</p>
+<pre class="r"><code>#Heteroskedasticity Robust Standard Errors
+coeftest(fit1, vcov = vcovHC(fit1))</code></pre>
+<pre><code>##
+## t test of coefficients:
+##
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 5.662347 0.073247 77.3044 &lt; 2.2e-16 ***
+## Gendermale 0.386084 0.105390 3.6634 0.0002693 ***
+## Smokeyes 0.762400 0.399937 1.9063 0.0570551 .
+## Height 0.341121 0.014070 24.2452 &lt; 2.2e-16 ***
+## Gendermale:Smokeyes -1.860294 0.928320 -2.0039 0.0454939
+*
+## Gendermale:Height 0.070589 0.019798 3.5655 0.0003900 ***
+## Smokeyes:Height -0.202289 0.107348 -1.8844 0.0599575 .
+## Gendermale:Smokeyes:Height 0.409480 0.147930 2.7681
+0.0058008 **
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<p>Since the data did not meet the assumptions, except for linearity, the regression for heteroskadisicty robust standard errors was done. The t-value seem to change a little and the pvalues become more significance. Everything else seems to be simliar</p>
+<pre class="r"><code>summary(fit1)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = LungCap ~ Gender * Smoke * Height, data =
+LungCapData_c)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -4.6587 -0.7521 0.0213 0.7456 6.0960
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 5.66235 0.07882 71.838 &lt; 2e-16 ***
+## Gendermale 0.38608 0.10624 3.634 0.000301 ***
+## Smokeyes 0.76240 0.37108 2.055 0.040324 *
+## Height 0.34112 0.01585 21.526 &lt; 2e-16 ***
+## Gendermale:Smokeyes -1.86029 0.70000 -2.658 0.008066 **
+## Gendermale:Height 0.07059 0.01950 3.620 0.000318 ***
+## Smokeyes:Height -0.20229 0.09007 -2.246 0.025048 *
+## Gendermale:Smokeyes:Height 0.40948 0.11935 3.431
+0.000640 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 1.252 on 646 degrees of freedom
+## Multiple R-squared: 0.7708, Adjusted R-squared: 0.7683
+## F-statistic: 310.4 on 7 and 646 DF, p-value: &lt; 2.2e-16</code></pre>
+<p>The R^2 shows the proportion of variation in lung capcity explained by the model is 0.7708. The R^2 shows the proportion of variation in lung capacity shown my the model and it is simliar, 0.7683.</p>
+<ul>
+<li><strong>4. (5 pts)</strong> Rerun same regression model (with the interaction), but this time compute bootstrapped standard errors (either by resampling observations or residuals). Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)</li>
+</ul>
+<pre class="r"><code>#Bootstrapped SE
+samp_distn&lt;-replicate(5000, {
+boot_dat&lt;-boot_dat&lt;-LungCapData_c[sample(nrow(LungCapData_c),replace=TRUE),]
+fit2&lt;-lm(LungCap ~ Gender * Smoke * Height, data=boot_dat)
+coef(fit2)
+})
+
+samp_distn%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) Gendermale Smokeyes Height
+Gendermale:Smokeyes Gendermale:Height Smokeyes:Height
+## 1 0.07259788 0.1045836 0.3759693 0.01374428 1.016646
+0.01947538 0.09993065
+## Gendermale:Smokeyes:Height
+## 1 0.1498738</code></pre>
+<pre class="r"><code>#Bootstrapped SE (Resampling/Residuals)
+fit2&lt;-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+resids&lt;-fit2$residuals
+fitted&lt;-fit2$fitted.values
+
+resid_resamp&lt;-replicate(5000,{
+new_resids&lt;-sample(resids,replace=TRUE)
+LungCapData_c$new_y&lt;-fitted+new_resids
+fit2&lt;-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+coef(fit2)
+})
+
+resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>## (Intercept) Gendermale Smokeyes Height
+Gendermale:Smokeyes Gendermale:Height Smokeyes:Height
+## 1 0 0 0 0 0 0 0
+## Gendermale:Smokeyes:Height
+## 1 0</code></pre>
+<p>The data was rerun using the bootstrapped standard errors, because it was non-normal. The bootstrp standrd error using the row resmapling were lower than the robust heteroskedatic errors and the orignal standard error. The bootstrapped standard error using the residual sampling were the same to the boot strapped stanrd error using the row sampling. The residual sampling stnadrd erros and the standard error of some variables were smaller than some of the heteroskedatic standrd errors adn normal SE. Residual resampling will be use to show the error.</p>
+<ul>
+<li><p><strong>5. (25 pts)</strong> Fit a logistic regression model predicting a binary variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary).</p>
+<ul>
+<li>Interpret coefficient estimates in context (10)</li>
+<li>Report a confusion matrix for your logistic regression (2)</li>
+<li>Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), Precision (PPV), and AUC of your model (5)</li>
+<li>Using ggplot, make a density plot of the log-odds (logit) colored/grouped by your binary outcome variable (3)</li>
+<li>Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (5)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>LungCapData_c&lt;-LungCapData_c%&gt;%mutate(y=as.numeric(Gender==&quot;female&quot;))
+
+#Logistic Regression
+fit3 &lt;- glm(y ~ LungCap + Smoke, data = LungCapData_c, family = binomial(link=&quot;logit&quot;))
+coeftest(fit3)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) 1.028511 0.209595 4.9071 9.242e-07 ***
+## LungCap -0.201388 0.034583 -5.8233 5.768e-09 ***
+## Smokeyes 0.971643 0.285646 3.4016 0.00067 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(-0.201388)</code></pre>
+<pre><code>## [1] 0.8175951</code></pre>
+<pre class="r"><code>exp(0.971643)</code></pre>
+<pre><code>## [1] 2.642282</code></pre>
+<p>When controlling for smoking,there is a signficant effect of lung capacity on the gender of the individual. Every gain in 1 mmhG of lungcapacity mutliples the odds of beinfs a female by 0.8175951. Controlling for lung capacity, there is a signficant effect of yes to smoker on the gender of the individual. This is effect is almost by 2.642282 odds of beings a female if smoked yes.</p>
+<pre class="r"><code>#Confusion Matrix
+LungCapData_c$prob&lt;-predict(fit3,type=&quot;response&quot;)
+table(predict=as.numeric(LungCapData_c$prob&gt;.5),truth=LungCapData_c$y)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict   0   1 Sum
+##     0   187 144 331
+##     1   149 174 323
+##     Sum 336 318 654</code></pre>
+<pre class="r"><code>#Accuracy
+(187+174)/654</code></pre>
+<pre><code>## [1] 0.5519878</code></pre>
+<pre class="r"><code>#Sensitivity
+174/318</code></pre>
+<pre><code>## [1] 0.5471698</code></pre>
+<pre class="r"><code>#Specificity
+187/336</code></pre>
+<pre><code>## [1] 0.5565476</code></pre>
+<pre class="r"><code>#Precision
+174/323</code></pre>
+<pre><code>## [1] 0.5386997</code></pre>
+<p>The accurary shows the number of predicted males who are actually male is 0.551878. The sensitivity or the position rate is 0.5471698, meaning that there are predicted females for around half the time. The specificity or tru nehative rate is simliar but it is 0.5565476. This shows because it includes both genders. The precision or portion of predicted demale who are acutally femlae is 0.5386997.</p>
+<pre class="r"><code>#Density of Log-Odds Plot
+LungCapData_c$odds&lt;-(LungCapData_c$prob)/(1-LungCapData_c$prob)
+LungCapData_c$logit&lt;-log(LungCapData_c$odds)
+ggplot(LungCapData_c)+geom_density(aes(logit, fill=Gender), alpha=0.3)</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-25-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC Curve and AUC
+ROCplot &lt;- ggplot(LungCapData_c) + geom_roc(aes(d = y, m = prob),n.cuts = 0) + geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1))
+ROCplot</code></pre>
+<p><img src="../../project/project2_files/figure-html/unnamed-chunk-26-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.6174004</code></pre>
+<p>The AUC of the model is 0.6174004 showing that the probability of chosing a male with a higher prediciotn than a female, while taking account of the lung capacity and wheter of not they smoke. This is a fairly poor AUC, meaning that lung capacity and whether or not the individual smokes is a poor predicator of gender.</p>
+<ul>
+<li><p><strong>6. (25 pts)</strong> Perform a logistic regression predicting the same binary response variable from <em>ALL</em> of the rest of your variables (the more, the better!)</p>
+<ul>
+<li>Fit model, compute in-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, AUC), and interpret (5)</li>
+<li>Perform 10-fold (or repeated random sub-sampling) CV with the same model and report average out-of-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, and AUC); interpret AUC and compare with the in-sample metrics (10)</li>
+<li>Perform LASSO on the same model/variables. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., <code>lambda.1se</code>). Discuss which variables are retained. (5)</li>
+<li>Perform 10-fold CV using only the variables lasso selected: compare model's out-of-sample AUC to that of your logistic regressions above (5)</li>
+</ul></li>
+</ul>
+<pre class="r"><code>LungCapData_c&lt;-LungCapData_c%&gt;%mutate(y=as.numeric(Gender==&quot;female&quot;))
+
+#Logistic Regression
+fit4 &lt;- glm(y ~ LungCap + Smoke + Height + Age, data = LungCapData_c, family = binomial(link=&quot;logit&quot;))
+coeftest(fit4)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) -0.396107 0.558857 -0.7088 0.4785
+## LungCap -0.328833 0.070857 -4.6408 3.470e-06 ***
+## Smokeyes 0.573903 0.310322 1.8494 0.0644 .
+## Height -0.031715 0.032206 -0.9847 0.3248
+## Age 0.222944 0.051911 4.2947 1.749e-05 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>LungCapData_c$prob &lt;- predict(fit4, type =&quot;response&quot;)
+table(predict=as.numeric(LungCapData_c$prob&gt;.5),truth=LungCapData_c$y)%&gt;% addmargins()</code></pre>
+<pre><code>##        truth
+## predict   0   1 Sum
+##     0   205 123 328
+##     1   131 195 326
+##     Sum 336 318 654</code></pre>
+<pre class="r"><code>#Accuracy
+(205+195)/654</code></pre>
+<pre><code>## [1] 0.6116208</code></pre>
+<pre class="r"><code>#Sensitivity
+195/318</code></pre>
+<pre><code>## [1] 0.6132075</code></pre>
+<pre class="r"><code>#Specificity
+205/336</code></pre>
+<pre><code>## [1] 0.610119</code></pre>
+<pre class="r"><code>#Precision
+195/326</code></pre>
+<pre><code>## [1] 0.5981595</code></pre>
+<p>After the model was fit, The accurary shows the number of predicted males who are actually male is 0.6116208. The sensitivity or the position rate is 0.6132075, meaning that there are predicted females for around half the time. The specificity or true nehative rate is simliar but it is 0.610119. This shows because it includes both genders. The precision or portion of predicted demale who are acutally femlae is 0.5981595.</p>
+<pre class="r"><code>#Class Diagnostics Function
+class_diag&lt;-function(probs,truth){
+tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+ord&lt;-order(probs, decreasing=TRUE)
+probs &lt;- probs[ord]; truth &lt;- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth))
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+n &lt;- length(TPR)
+auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc)
+}
+#10-Fold CV
+set.seed(1234)
+k=10
+data1&lt;-LungCapData_c[sample(nrow(LungCapData_c)),]
+folds&lt;-cut(seq(1:nrow(LungCapData)),breaks=k,labels=F)
+diags&lt;-NULL
+for(i in 1:k){
+train&lt;-data1[folds!=i,]
+test&lt;-data1[folds==i,]
+truth&lt;-test$y
+fit&lt;-glm(y ~ LungCap + Smoke,data=train,family=&quot;binomial&quot;)
+probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+apply(diags,2,mean)</code></pre>
+<pre><code>##       acc      sens      spec       ppv       auc 
+## 0.5503497 0.5473506 0.5578843 0.5377630 0.6195398</code></pre>
+<p>This shows the sample accuracy of 0.5503497, the sensitivity is 0.5473506, the specificity is 0.5578843, and the auc as 0.6195398. This still shows a poor auc, meaning that the model is not a good predicotr of gender.</p>
+<pre class="r"><code>LungCapData_c$Gender=NULL
+LungCapData_c$Smoke=NULL
+LungCapData_c$prob=NULL
+LungCapData_c$odds=NULL
+LungCapData_c$logit=NULL
+
+fit5 &lt;- lm(y~., data = LungCapData_c, family=&quot;binomial&quot;)
+
+y&lt;-as.matrix(LungCapData_c$y)
+x&lt;-model.matrix(fit5)
+cv &lt;- cv.glmnet(x, y, family=&quot;binomial&quot;)
+lasso &lt;- glmnet(x, y, family=&quot;binomial&quot;, lambda = cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 5 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s0
+## (Intercept)  0.29913413
+## (Intercept)  .         
+## Age          0.08888248
+## LungCap     -0.21028562
+## Height       .</code></pre>
+<p>After running the lasso regression on the linear model predicitng the discipline from all the other variavles, there are not variables that are significant. There would be not variables in the new data set adn the rest are just showing noise.</p>
+<pre class="r"><code>#New data set made for to show how
+#NO variables are not significant from lasso
+LungCapData_new &lt;- data.frame(LungCapData$Age, LungCapData_c$LungCap, LungCapData_c$y)
+
+
+data1 &lt;- LungCapData_new[sample(nrow(LungCapData_new)), ]
+folds &lt;- cut(seq(1:nrow(LungCapData_new)), breaks = k, labels = F)
+diags &lt;- NULL
+for (i in 1:k) {
+train &lt;- data1[folds != i, ]
+test &lt;- data1[folds == i, ]
+truth &lt;- test$LungCapData_c.y
+fit &lt;- lm(LungCapData_c.y ~ ., data = train, family = &quot;binomial&quot;)
+probs &lt;- predict(fit, newdata = test, type = &quot;response&quot;)
+diags &lt;- rbind(diags, class_diag(probs, truth))
+}
+
+diags %&gt;% summarize_all(mean)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.5765967 0.5893896 0.5676547 0.5641712 0.6389589</code></pre>
+<p>This shows the sample accuracy of 0.5812587, the sensitivity is 0.5842774 , the specificity is 0.5762647, and the auc as 0.6415479. This still shows a poor auc, meaning that the model is not a good predicotr of gender. The values showed slight improvment but was overrall not a significnat improvement. This is becuase the variables were not significant in the 10-fold CV.</p>
+<p>...</p>
+</div>
+
+            
+        <hr>         <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div> 
+            </div>
+          </div>
+
+   <hr>  <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div> 
+        </div>
+      </div>
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="../../js/docs.min.js"></script>
+<script src="../../js/main.js"></script>
+
+<script src="../../js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>

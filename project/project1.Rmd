@@ -1,0 +1,229 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: sushil gangasani
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F,
+tidy=TRUE, tidy.opts=list(width.cutoff=60), R.options=list(max.print=100))
+```
+
+## Data Wrangling and Data Exploration
+
+```{R}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tibble)
+library(readr)
+###importing datasets
+income_per <- read_csv("income_per_person_gdppercapita_ppp_inflation_adjusted_MODIFY.csv")
+pop_total <- read_csv("population_total_modified.csv")
+urban_pop <- read_csv("urban_population_percent_of_total_modified.csv")
+```
+
+###Introduction
+
+I knew I wanted to compare countries with each other, so at first I was exploring specific countries to compare. I was primarily using US data vs EU countries. I then thought why not do all countries so I decided to use Gapminder, which has data on all global countries avalible. This would allow my results to be on a global scale. I first wanted to compare the Income per person in each contry to the total amount of population in a country. I wanted to see if the size of a country's citizens affect how much income they make. As a higher population can mean more customers or workers. The first two datasets was untidy and contained the country name to the data it was recorded. I realized I need another numeric variable and decided to include the ratio of urbanization based on the ppulation that lived in the city of a country. This would add more depth and allow me to see if urbanization plays a factor in the average income per person. This had year, country, and the ratio of urbanization population. I might see a higher ratio of income per person for a higher ratio of urbanization due to a more industralized economy of the city.
+
+
+###Tidying
+```{R}
+tidy_pop <- pop_total %>% pivot_longer(c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019"), names_to="year", values_to="population")
+tidy_pop <- tidy_pop %>% na.omit()
+
+tidy_income <- income_per %>% pivot_longer(
+  c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019"), names_to = "year", values_to = "income")
+tidy_income <- tidy_income %>% na.omit()
+
+tidy_urban <- urban_pop %>% pivot_longer(
+  c("2000","2001","2002","2003","2004","2005","2006","2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019"), names_to = "year", values_to = "urban_ratio")
+tidy_urban <- tidy_urban %>% na.omit()
+```
+All datasets used were not tidy and needed to be tidy. The dates were column headers for all the datasets and were tidy to a data column and a new column for each value was created. "tidy_urban" created a column for "year" and column for "urban_ratio". "tidy_pop" created a column for "year" and column for "pop". "tidy_income" created a column for "year" and column for "income". The orginal dataset was pipped into the pivot_longer function to create new columns for year and the specific value. 
+
+###Joining/Merging
+```{R}
+Full_Data <- tidy_pop %>% left_join(tidy_urban) %>% left_join(tidy_income)
+
+```
+I chose the dplry function called left_join to merge my data sets. the tidy_income had 11580 observations, tidy_pop had 11700 observations and tidy_urban had 11640 observation with each data set that had 3 variables. 2 of the variables from the dataset are the same, year and country. I used left_join becauseit keeps all rows from the original add merges the datasets based on what columns match. Since I had two column match for each dataset, the left_join function was able to joinall datasets with the matching columns. It was helpful, because I got all datasets from the same database which used the same countries and years. There was no data needed to be omitted, because all the datasets had matching year and countries, so no unknown columns. 
+
+###Summary Stats
+```{R}
+###correlation matrix of all using select function
+corrmat <- Full_Data %>% na.omit %>% select_if(is.numeric) %>% cor()
+corrmat
+```
+The select function, dplyr function, was used to make a correlational matrix of the numeric values in the dataset. It shows a reltively strong postive correlation between the ratio of urban population and the income per person. This means as more population of a country is at urban areas, the more likely the average income per person increases as well. This shows a correlation of wealth and urbanization, which was predicted. There is a small negative correlation between total poplation of the country and income per person as well as urban ratio. This is unexpected, as I thought with more people there would be more job opportunities and labour supply for production output. This shows a small corelation aganist that.
+
+```{R}
+###Mean income of each country using group_by and summarize functions
+Full_Data %>% 
+  group_by(country) %>% 
+  summarize(mean(income, na.rm = T))
+mean_income_country <- Full_Data %>% group_by(country) %>% summarize(mean(income, na.rm = T))
+```
+The group_by and summarize functions were used to find the mean income of each country in the dataset. The highest avergae income per person seems to be in Qatar while the lowest is in Somalia based on the new dataset created, mean_income_country.
+
+```{R}
+#urban ratio of year 2019 using filter and arrange function
+Full_Data %>% filter(year=="2019") %>% arrange(desc(urban_ratio, na.rm=T))
+```
+The filter and arrange function was used to chose the year of 2019 and isolate the ratio of population living in urban areas from descending order. Suprisingly, the data states that Kuwait has close to hundred percent of population living in an urban enviroment. This is unexpected as I though the highest income country, Qatar, would be the highest urbanization. Moanaco, Kuwait, Naru, and Singapore are all fully urbanized population.
+
+```{R}
+###New variable pop_by_mil created using mutate
+Full_Data %>% mutate(pop_by_mil = population/1000000)
+```
+The mutate function was used to created a new variable called pop_by_mil. This represents the total population of a country in the millions instead. This helps understanding and with analyzing results in more understandable way.Full_Data was pipped into mutate and the population variabe was manuplated by dividing by a million.
+
+```{R}
+###MEAN of variables by country using group_by and summarize function
+Full_Data %>% group_by(country) %>% summarize_if(is.numeric, mean, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the mean of the variable representing the country. The country is group_by and the summarize function is used to find the mean of the different numeric variables. This mean adds all the variations in population, urban_ratio, and income throughout the years into one area.
+
+```{R}
+###STANDARD DEVIATION of variables by country using group_by and summarize function
+Full_Data %>% group_by(country) %>% summarize_if(is.numeric, sd, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the standard deviation of the variable representing the country. The country is group_by and the summarize function is used to find the standard deviation of the different numeric variables. Thisshows that those with higher standard deviation in any category means that there are more differences between each year of a country.
+
+```{R}
+###VARIANCE of variables by country using group_by and summarize function
+Full_Data %>% group_by(country) %>% summarize_if(is.numeric, var, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the variance of the variable representing the country. The country is group_by and the summarize function is used to find the standard deviation of the different numeric variables. This shows that those with higher variance in any category means a larger avergae point in which each point differs.
+
+```{R}
+###MINIMUM of variables by country using group_by and summarize function
+Full_Data %>% group_by(country) %>% summarize_if(is.numeric, min, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the minimum of the variable representing the country. The country is group_by and the summarize function is used to find the minimum of the different numeric variables. The minimum represent the lowest amount of population, urban ratio, or income per person in any given country.
+
+```{R}
+###MAXIMUM of variables by country using group_by and summarize function
+Full_Data %>% group_by(country) %>% summarize_if(is.numeric, max, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the maximum of the variable representing the country. The country is group_by and the summarize function is used to find the minimum of the different numeric variables. The maximum represent the highest amount of population, urban ratio, or income per person in any given country.
+
+```{R}
+###MEAN of variables by year using group_by and summarize function
+Full_Data %>% group_by(year) %>% summarize_if(is.numeric, mean, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the mean of the variable representing the year. The year is group_by and the summarize function is used to find the minimum of the different numeric variables. The maximum represent the highest amount of population, urban ratio, or income per person in any given year.
+
+```{R}
+###STANDARD DEVIATION of variables by year using group_by and summarize function
+Full_Data %>% group_by(year) %>% summarize_if(is.numeric, sd, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the standard deviation of the variable representing the year. The year is group_by and the summarize function is used to find the standard deviation of the different numeric variables. This shows that those with higher standard deviation in any category means that there are more differences between all country per year.
+
+```{R}
+###VARIANCE of variables by year using group_by and summarize function
+Full_Data %>% group_by(year) %>% summarize_if(is.numeric, var, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the variance of the variable representing the year. The year is group_by and the summarize function is used to find the standard deviation of the different numeric variables. This shows that those with higher variance in any category means a larger avergae point in which each point differs.
+
+```{R}
+###MINIMUM of variables by year using group_by and summarize function
+Full_Data %>% group_by(year) %>% summarize_if(is.numeric, min, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the minimum of the variable representing the year. The year is group_by and the summarize function is used to find the minimum of the different numeric variables. The minimum represent the lowest amount of population, urban ratio, or income per person at any given year.
+
+```{R}
+###MAXIMUM of variables by year using group_by and summarize function
+Full_Data %>% group_by(year) %>% summarize_if(is.numeric, max, na.rm=T) %>% head()
+```
+The group_by and summarize function was used to compute the maximum of the variable representing the year. The year is group_by and the summarize function is used to find the minimum of the different numeric variables. The maximum represent the highest amount of population, urban ratio, or income per person at any given year.
+
+###Visualizing
+```{R}
+corrheat <- colorRampPalette(c("blue","white","red"))(20)
+heatmap(corrmat, col=corrheat, symm = TRUE)
+```
+The more red the color is means the more postive correlation it holds. The more blue means more negative correlation occurs relatively to the others. The intensity of the boxes shows the magnitude of the correlation.
+
+```{R}
+ggplot(Full_Data,aes(income,urban_ratio,color=log10(population)),stat="summary") + geom_point(size=1) + scale_y_continuous("urban ratio") + scale_x_continuous("income") + labs(color="Log of Population") + ggtitle("Income,Urban ratio, and population Globally")
+```
+This shows a steep curve for the increasing urbanization to increasing income.There seems to be a correlation with income and urban ratio. Although some countries with high urban ratio have low income. The population does not seem to have an effect on the urbanization nor income. The population does not have an effect based on the graph. The population variable was logged to show a strenghtened correlation, but that did not have an effect on the presentation of the data.
+
+```{R}
+ggplot(data=Full_Data, aes(x=income,y=population)) + geom_point(aes(color=urban_ratio)) + stat_smooth(method="gam", formula = y~s(x), size=1, color="red") + xlab("income") + scale_y_continuous(name = "Population of Country") + ggtitle("Income by Population using Urban ratio")
+```
+The graph above shows a largely skewed data in which the population is vastly different. It shows that the larger income have a relatively smaller population and a medium urban ratio. The line shows the flow of the data in which the income and the population have relatively little effect on the population. There seems to be little to no correlation between the population and income as the line shown has a slope that is close to being flat.The line above flows that trend. Large porportion of the population is centered around the low income area, but many points that cannot be removed due to massive unjustifable removal of data. Removing this amount of countries will defeat the purpose of a global outlook.
+
+
+###Dimensionality Reduction
+
+###Principle Component Analysis (PCA)
+
+###Preparing the Data
+```{R}
+###Normalize the Data
+data_norm<-Full_Data%>%select_if(is.numeric) %>% na.omit %>% scale
+```
+The data was normalized for the first step of PCA. To normalize the data, only numeric values were chosen and NAs were omitted. The scale is causing the mean=0 and sd=1.
+
+```{R}
+###Running the princomp function
+data_pca<-princomp(data_norm)
+###Summary of Results
+summary(data_pca, loadings=T)
+```
+The summary is the overview for what is happening. The Importance of components shows what variables to keep.
+
+###Deciding What PCs to keep
+
+```{R}
+#Calculating Eigenvalues
+eigval<-data_pca$sdev^2
+#Proportion of Variation Explained by Eigenvalues
+varprop=round(eigval/sum(eigval),2)
+
+#Proportion of Variation Plots
+ggplot()+geom_bar(aes(y=varprop,x=1:3),stat="identity")+
+xlab("")+geom_path(aes(y=varprop,x=1:3))+
+geom_text(aes(x=1:3,y=varprop,label=round(varprop,2)),vjust=1,col="white",size=5)+
+scale_y_continuous(breaks=seq(0,.6,.2),labels = scales::percent)+
+scale_x_continuous(breaks=1:3)
+```
+The graph above is the scree plot which shows the variable that are needed to be kept. Based on the graph all the variables need to be kept, because the line does not start to flatten and is very steep.
+
+```{R}
+#Cumulative Proportion of Variance
+round(cumsum(eigval)/sum(eigval),2)
+```
+The rule is to pick the PCs until cumulative proportion of variance is greater than 80%. Based on the rule, we should only keep by the first PC.
+
+```{R}
+eigval
+```
+Based on the eigvel values only the first PC is kept, because it is greater than 1.
+
+###Ploting PCA
+```{R}
+###The rules of thumb elminated all PCs except for the first one. Due to this graphing and visualizing is impossible. Graphing was done to show competence of the code
+#Plotting PC1 vs PC2
+df<-data.frame(PC1=data_pca$scores[,1], PC2=data_pca$scores[,2])
+ggplot(df,aes(PC1, PC2))+geom_point()
+```
+The graph was only coded to show competence, but only the first PC passed all the rules of thumb when finding deciding the PCs to keep. Again, only PC1 passed all asumptions and PC2 failed. 
+
+...
+
+
+
+
+

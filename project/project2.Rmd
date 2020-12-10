@@ -1,0 +1,398 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: Sushil Gangasani (srg3224) "SDS348"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+## Introduction
+
+The LungCapData dataset shows the Lungcapacity of individuals of smokers and nonsmokers. There are various variables in this dataset like Age, LungCap, Height, Gender and Smoke. The Age is a categorical variable that shows the age of the person filled in the observation. The Height shows how tall in length of inchs the person observed is; it is a numeric variable. The Gender shows wheter the person observed is male or female, a categorical variable. The Lung Capacity in mmHG shows the maximum amount of air that can be held in the lungs, a numeric variable. The Smoke variable is categorical that shows if those observe smoke or do not smoke reguarly; yes meaning the observation person does smoke. I want to test the effect of smoking on lungcapacity as well as the effect of gender on the likelyhood to smpke. I want to test various factors like that. I chose this dataset, because I just finished learning amount the physiology of the lungs and what to see if I can apply my knowledge in this. The dataset contains 654 observations with 5 variables.
+
+
+## Guidelines and Rubric
+
+- **1. (15 pts)** Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all is unreasonable or doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss MANOVA assumptions and whether or not they are likely to have been met (no need for anything too in-depth) (2).
+
+```{R}
+library(lmtest)
+library(sandwich)
+library(plotROC)
+library(tidyverse)
+library(MASS)
+library(glmnet)
+library(ggplot2)
+
+LungCapData <- read_csv("LungCapData2.csv")
+
+manova<-manova(cbind(Age, LungCap, Height)~Gender, data = LungCapData)
+summary(manova)
+
+```
+The Manova shows the effect of gender on age, lung capacity,and height. It showed a significant difference were found of each element level, p <0.001.
+
+
+```{R}
+summary.aov(manova)
+```
+The ANOVA for the dependent variables were done to follow the MANOVA test. The univariate ANOVA for the stats tested of the lung capacity and height were significantly different by gender. Age was not signifcanlty different by gender.
+
+```{R}
+pairwise.t.test(LungCapData$Age, LungCapData$Gender, p.adj="none")
+pairwise.t.test(LungCapData$LungCap, LungCapData$Gender, p.adj="none")
+pairwise.t.test(LungCapData$Height, LungCapData$Gender, p.adj="none")
+```
+The post hoc analysis was done by using pairwise comparison to see which gender differed in each variable that was tested. When looking at the age of the observed, male and female do not differ significantly. When looking at Lung Capacity and Height, male and female do differ significantly.
+
+```{R}
+#Probability of Type-1 Error
+1-(1-0.05)^7
+#bonf correction
+0.05/7
+```
+There were 7 different hypothesis conducted so probablity of Type-1 Error is 0.3016627. Bonferroni correction was used to adjust the significnae level to 0.007142857.
+
+```{R}
+pairwise.t.test(LungCapData$Age, LungCapData$Gender, p.adj="bonf")
+pairwise.t.test(LungCapData$LungCap, LungCapData$Gender, p.adj="bonf")
+pairwise.t.test(LungCapData$Height, LungCapData$Gender, p.adj="bonf")
+```
+After adjusting for the significance value, the mean difference between males and females are still significant for lung capacity and height, but not for age.
+
+The ANOVA was probably met, because of the assumptions like random sampling, indpendent observations, etc. exist when the data was collected. The MANOVA test proably did not meet the assumptions du to the need of homogenity, no multicollinerity, no extreme outliers, etc. A data set like this would be hard to meet these assumptions and the data would need to be controlled more.
+
+- **2. (10 pts)** Perform some kind of randomization test on your data (that makes sense). The statistic can be anything you want (mean difference, correlation, F-statistic/ANOVA, chi-squared), etc. State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).
+
+```{R}
+#Hypothesis below...
+```
+Null Hypothesis (Ho): The mean lung capacity is the same for nonsmokers and smokers
+Alternative Hypothesis (Ha):The mean lung capacity is different for nonsmokers and smokers
+```{R}
+mean_diff <- mean(LungCapData[LungCapData$Smoke=="yes",]$LungCap)-mean(LungCapData[LungCapData$Smoke=="no",]$LungCap)
+
+#permutation loop
+rand_dist<-vector()
+for(i in 1:5000){
+new<-data.frame(LungCap=sample(LungCapData$LungCap),Smoke=LungCapData$Smoke)
+rand_dist[i]<-mean(new[new$Smoke=="yes",]$LungCap)- mean(new[new$Smoke=="no",]$LungCap)}
+
+#P value of permutation test
+mean(rand_dist>mean_diff)*2
+
+#Independent t-test
+t.test(data=LungCapData,LungCap~Smoke)
+
+```
+The p-value from the randomization test is less than 0.05 of alpha, so we can reject the null hypothesis and state that the mean lung capacity is different for nonsmokers and smokers of those sampled. This was used for the independent t-test, but the randomization shows data that is verified. 
+
+```{R}
+{hist(rand_dist,main="",ylab=""); abline(v = mean_diff,col="red")}
+{hist(rand_dist,main="",ylab="",breaks=2); abline(v = mean_diff,col="red")}
+```
+Both graphs show the same distribution, but breaks was added to the second histogram to show the test static.
+
+- **3. (35 pts)** Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.
+
+    - Interpret the coefficient estimates (do not discuss significance) (10)
+    - Plot the regression using `ggplot()` using geom_smooth(method="lm"). If your interaction is numeric by numeric, refer to code in the slides to make the plot or check out the `interactions` package, which makes this easier. If you have 3 or more predictors, just chose two of them to plot for convenience. (8)
+    - Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (4)
+    - Regardless, recompute regression results with robust standard errors via `coeftest(..., vcov=vcovHC(...))`. Discuss significance of results, including any changes from before/after robust SEs if applicable. (8)
+    - What proportion of the variation in the outcome does your model explain? (4)
+
+```{R}
+#Mean-Centering Numeric Variables
+LungCapData-> LungCapData_c
+LungCapData_c$Height <- LungCapData_c$Height - mean(LungCapData_c$Height, na.rm = T)
+
+fit1<-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+summary(fit1)
+```
+ The intercept estimate is 5.66235, which the average lung capacity when no interaction between gender and whether or not the observed smoke. The coefficent estimate of gender is 0.38608 which is how much the lung capacity increases, mmHG, when the gender is male. The coefficient of smoke, 0.76240, is how much the average lung capacity increases when the individual does smoke. The coefficient estimate for height of indivudals, 0.34112, shows how much the avergae lung capacity ubcrease for every increase in 1 inch.
+ 
+The coefficient Gendermale:Smokeyes is -1.86029  is how much the average lung capacity will change if the indivual is male who smokes (said yes to smoking). Gendermale:Height  is 0.07059 is how much average lung capacity will change if individual is male and every increase in 1 inch of height. The coefficient of Smokeyes:Height is -0.20229 is how much average lung capacity will change if the individual smokes and every increase in 1 inch of height.The cofficiebt of Gendermale:Smokeyes:Height is 0.40948 which is how much the average lung capacity will change for every increase in 1 inch of height, if the individual is male, and if the indivudal smokes.
+ 
+```{R}
+ggplot(LungCapData_c, aes(x=Height, y=LungCap, group=Smoke))+geom_point(aes(color=Smoke))+
+geom_smooth(method="lm",se=F,fullrange=T,aes(color=Smoke))+theme(legend.position=c(.9,.19))+xlab("Height of individual")+ggtitle("Interaction between hright and smoking habit on lung capacity")
+```
+
+```{R}
+resids<-fit1$residuals
+fitvals<-fit1$fitted.values
+
+#Linearity
+ggplot(LungCapData_c, aes(x=Height, y=LungCap)) + geom_point() + geom_smooth(method = "lm", se=F)
+```
+
+```{R}
+#Homoskedasticity
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='red')
+```
+
+```{R}
+#Homoskedasticity of Breuch-Pagan Test
+bptest(fit1)
+```
+
+```{R}
+#Normality
+ggplot()+geom_histogram(aes(resids), bins=20)
+ggplot()+geom_qq(aes(sample=resids))+geom_qq_line()
+```
+
+```{R}
+#Normality from Shapiro-Wilk Test
+shapiro.test(resids)
+```
+The numeric variable, Height, does seem to have a linera relationship according to the graph and the other two variables are also linear, but are categorical (not important). The Bech-Pagan test, we have to rejec the null hypothesis of homoskedasticity because the pvalue shows significance. The Shaprio_wilk Test null hypothesis is also rejected becuase the test was also significant. The assumptions of linearity seemed to met, but the assumtpions for homoskedasticity and normality were not met.
+
+```{R}
+#Heteroskedasticity Robust Standard Errors
+coeftest(fit1, vcov = vcovHC(fit1))
+```
+Since the data did not meet the assumptions, except for linearity, the regression for heteroskadisicty robust standard errors was done. The t-value seem to change a little and the pvalues become more significance. Everything else seems to be simliar
+
+```{R}
+summary(fit1)
+```
+The R^2 shows the proportion of variation in lung capcity explained by the model is 0.7708. The R^2 shows the proportion of variation in lung capacity shown my the model and it is simliar, 0.7683. 
+
+- **4. (5 pts)** Rerun same regression model (with the interaction), but this time compute bootstrapped standard errors (either by resampling observations or residuals). Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs and the robust SEs)
+
+```{R}
+#Bootstrapped SE
+samp_distn<-replicate(5000, {
+boot_dat<-boot_dat<-LungCapData_c[sample(nrow(LungCapData_c),replace=TRUE),]
+fit2<-lm(LungCap ~ Gender * Smoke * Height, data=boot_dat)
+coef(fit2)
+})
+
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+
+#Bootstrapped SE (Resampling/Residuals)
+fit2<-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+resids<-fit2$residuals
+fitted<-fit2$fitted.values
+
+resid_resamp<-replicate(5000,{
+new_resids<-sample(resids,replace=TRUE)
+LungCapData_c$new_y<-fitted+new_resids
+fit2<-lm(LungCap ~ Gender * Smoke * Height, data = LungCapData_c)
+coef(fit2)
+})
+
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+
+```
+The data was rerun using the bootstrapped standard errors, because it was non-normal. The bootstrp standrd error using the row resmapling were lower than the robust heteroskedatic errors and the orignal standard error. The bootstrapped standard error using the residual sampling were the same to the boot strapped stanrd error using the row sampling. The residual sampling stnadrd erros and the standard error of some variables were smaller than some of the heteroskedatic standrd errors adn normal SE. Residual resampling will be use to show the error.
+
+- **5. (25 pts)** Fit a logistic regression model predicting a binary variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary). 
+
+    - Interpret coefficient estimates in context (10)
+    - Report a confusion matrix for your logistic regression (2)
+    - Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), Precision (PPV), and AUC of your model (5)
+    - Using ggplot, make a density plot of the log-odds (logit) colored/grouped by your binary outcome variable (3)
+    - Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (5)
+
+```{R}
+LungCapData_c<-LungCapData_c%>%mutate(y=as.numeric(Gender=="female"))
+
+#Logistic Regression
+fit3 <- glm(y ~ LungCap + Smoke, data = LungCapData_c, family = binomial(link="logit"))
+coeftest(fit3)
+
+exp(-0.201388)
+exp(0.971643)
+```
+When controlling for smoking,there is a signficant effect of lung capacity on the gender of the individual. Every gain in 1 mmhG of lungcapacity mutliples the odds of beinfs a female by 0.8175951. Controlling for lung capacity, there is a signficant effect of yes to smoker on the gender of the individual. This is effect is almost by 2.642282 odds of beings a female if smoked yes. 
+
+```{R}
+#Confusion Matrix
+LungCapData_c$prob<-predict(fit3,type="response")
+table(predict=as.numeric(LungCapData_c$prob>.5),truth=LungCapData_c$y)%>%addmargins
+```
+
+```{R}
+#Accuracy
+(187+174)/654
+```
+
+```{R}
+#Sensitivity
+174/318
+```
+
+```{R}
+#Specificity
+187/336
+```
+
+```{R}
+#Precision
+174/323
+```
+The accurary shows the number of predicted males who are actually male is 0.551878. The sensitivity or the position rate is 0.5471698, meaning that there are predicted females for around half the time. The specificity or tru nehative rate is simliar but it is 0.5565476. This shows because it includes both genders. The precision or portion of predicted demale who are acutally femlae is 0.5386997.
+
+```{R}
+#Density of Log-Odds Plot
+LungCapData_c$odds<-(LungCapData_c$prob)/(1-LungCapData_c$prob)
+LungCapData_c$logit<-log(LungCapData_c$odds)
+ggplot(LungCapData_c)+geom_density(aes(logit, fill=Gender), alpha=0.3)
+```
+
+```{R}
+#ROC Curve and AUC
+ROCplot <- ggplot(LungCapData_c) + geom_roc(aes(d = y, m = prob),n.cuts = 0) + geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1))
+ROCplot
+
+calc_auc(ROCplot)
+```
+The AUC of the model is 0.6174004 showing that the probability of chosing a male with a higher prediciotn than a female, while taking account of the lung capacity and wheter of not they smoke. This is a fairly poor AUC, meaning that lung capacity and whether or not the individual smokes is a poor predicator of gender. 
+
+
+- **6. (25 pts)** Perform a logistic regression predicting the same binary response variable from *ALL* of the rest of your variables (the more, the better!) 
+
+    - Fit model, compute in-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, AUC), and interpret (5)
+    - Perform 10-fold (or repeated random sub-sampling) CV with the same model and report average out-of-sample classification diagnostics (Accuracy, Sensitivity, Specificity, Precision, and AUC); interpret AUC and compare with the in-sample metrics (10)
+    - Perform LASSO on the same model/variables. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., `lambda.1se`). Discuss which variables are retained. (5)
+    - Perform 10-fold CV using only the variables lasso selected: compare model's out-of-sample AUC to that of your logistic regressions above (5)
+
+```{R}
+LungCapData_c<-LungCapData_c%>%mutate(y=as.numeric(Gender=="female"))
+
+#Logistic Regression
+fit4 <- glm(y ~ LungCap + Smoke + Height + Age, data = LungCapData_c, family = binomial(link="logit"))
+coeftest(fit4)
+
+LungCapData_c$prob <- predict(fit4, type ="response")
+table(predict=as.numeric(LungCapData_c$prob>.5),truth=LungCapData_c$y)%>% addmargins()
+```
+```{R}
+#Accuracy
+(205+195)/654
+```
+
+```{R}
+#Sensitivity
+195/318
+```
+
+```{R}
+#Specificity
+205/336
+```
+
+```{R}
+#Precision
+195/326
+```
+After the model was fit, The accurary shows the number of predicted males who are actually male is 0.6116208. The sensitivity or the position rate is  0.6132075, meaning that there are predicted females for around half the time. The specificity or true nehative rate is simliar but it is 0.610119. This shows because it includes both genders. The precision or portion of predicted demale who are acutally femlae is  0.5981595.
+
+
+```{R}
+#Class Diagnostics Function
+class_diag<-function(probs,truth){
+tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+acc=sum(diag(tab))/sum(tab)
+sens=tab[2,2]/colSums(tab)[2]
+spec=tab[1,1]/colSums(tab)[1]
+ppv=tab[2,2]/rowSums(tab)[2]
+if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+ord<-order(probs, decreasing=TRUE)
+probs <- probs[ord]; truth <- truth[ord]
+TPR=cumsum(truth)/max(1,sum(truth))
+FPR=cumsum(!truth)/max(1,sum(!truth))
+dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+n <- length(TPR)
+auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+data.frame(acc,sens,spec,ppv,auc)
+}
+#10-Fold CV
+set.seed(1234)
+k=10
+data1<-LungCapData_c[sample(nrow(LungCapData_c)),]
+folds<-cut(seq(1:nrow(LungCapData)),breaks=k,labels=F)
+diags<-NULL
+for(i in 1:k){
+train<-data1[folds!=i,]
+test<-data1[folds==i,]
+truth<-test$y
+fit<-glm(y ~ LungCap + Smoke,data=train,family="binomial")
+probs<-predict(fit,newdata = test,type="response")
+diags<-rbind(diags,class_diag(probs,truth))
+}
+apply(diags,2,mean)
+```
+This shows the sample accuracy of 0.5503497, the sensitivity is 0.5473506, the specificity is 0.5578843, and the auc as 0.6195398. This still shows a poor auc, meaning that the model is not a good predicotr of gender. 
+
+```{R}
+LungCapData_c$Gender=NULL
+LungCapData_c$Smoke=NULL
+LungCapData_c$prob=NULL
+LungCapData_c$odds=NULL
+LungCapData_c$logit=NULL
+
+fit5 <- lm(y~., data = LungCapData_c, family="binomial")
+
+y<-as.matrix(LungCapData_c$y)
+x<-model.matrix(fit5)
+cv <- cv.glmnet(x, y, family="binomial")
+lasso <- glmnet(x, y, family="binomial", lambda = cv$lambda.1se)
+coef(lasso)
+```
+After running the lasso regression on the linear model predicitng the discipline from all the other variavles, there are not variables that are significant. There would be not variables in the new data set  adn the rest are just showing noise.
+
+```{R}
+#New data set made for to show how
+#NO variables are not significant from lasso
+LungCapData_new <- data.frame(LungCapData$Age, LungCapData_c$LungCap, LungCapData_c$y)
+
+
+data1 <- LungCapData_new[sample(nrow(LungCapData_new)), ]
+folds <- cut(seq(1:nrow(LungCapData_new)), breaks = k, labels = F)
+diags <- NULL
+for (i in 1:k) {
+train <- data1[folds != i, ]
+test <- data1[folds == i, ]
+truth <- test$LungCapData_c.y
+fit <- lm(LungCapData_c.y ~ ., data = train, family = "binomial")
+probs <- predict(fit, newdata = test, type = "response")
+diags <- rbind(diags, class_diag(probs, truth))
+}
+
+diags %>% summarize_all(mean)
+```
+This shows the sample accuracy of 0.5812587, the sensitivity is 0.5842774	, the specificity is 0.5762647, and the auc as 0.6415479. This still shows a poor auc, meaning that the model is not a good predicotr of gender. The values showed slight improvment but was overrall not a significnat improvement. This is becuase the variables were not significant in the 10-fold CV.
+
+...
+
+
+
+
+
